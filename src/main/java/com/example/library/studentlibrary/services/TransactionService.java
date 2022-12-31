@@ -96,7 +96,7 @@ public class TransactionService {
         transactionRepository5.save(transaction);
         //Note that the error message should match exactly in all cases
 
-       return null; //return transactionId instead
+       return transaction.getTransactionId(); //return transactionId instead
     }
 
     public Transaction returnBook(int cardId, int bookId) throws Exception{
@@ -110,7 +110,32 @@ public class TransactionService {
         //make the book available for other users
         //make a new transaction for return book which contains the fine amount as well
 
-        Transaction returnBookTransaction  = null;
-        return returnBookTransaction; //return the transaction after updating all details
+        // to calculate time from issue date till now in milliseconds
+        long timeIssueTime = Math.abs(System.currentTimeMillis() - issueDate.getTime());
+
+        // calculate above milliseconds into days
+        long no_of_days_passed = TimeUnit.DAYS.convert(timeIssueTime, TimeUnit.MILLISECONDS);
+
+        int fine = 0;
+        if(no_of_days_passed > getMax_allowed_days) {
+            fine = (int)((no_of_days_passed - getMax_allowed_days) * fine_per_day);
+        }
+
+
+        book.setAvailable(true);
+        book.setCard(null);
+
+        bookRepository5.updateBook(book);
+
+        Transaction tr = new Transaction();
+        tr.setBook(transaction.getBook());
+        tr.setCard(transaction.getCard());
+        tr.setIssueOperation(false);
+        tr.setFineAmount(fine);
+        tr.setTransactionStatus(TransactionStatus.SUCCESSFUL);
+
+        transactionRepository5.save(tr);
+
+        return tr; //return the transaction after updating all details
     }
 }
